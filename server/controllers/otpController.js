@@ -77,7 +77,6 @@ export const createOTP = async (req,res)=>{
 //    });
 // }
 // }
-
 export const verifyOTP = async (req,res)=>{
 
    const { otp } = req.body || {};
@@ -95,6 +94,10 @@ export const verifyOTP = async (req,res)=>{
 
    if(!user){
       return res.status(404).json({message:"User not found"});
+   }
+
+   if(!user.otpHash){
+      return res.json({message:"No active OTP"});
    }
 
    if(Date.now() > user.otpExpriy){
@@ -115,6 +118,11 @@ export const verifyOTP = async (req,res)=>{
    if(match){
 
       user.LockerStatus = "UNLOCKED";
+
+      // 🔥 one-time-use OTP
+      user.otpHash = null;
+      user.otpExpriy = null;
+      user.attemptCount = 0;
 
       await user.save();
 
