@@ -22,14 +22,16 @@ export const createOTP = async (req,res)=>{
 
    const user = await User.findById(req.user.id);
 
-   user.otpHash = await bcrypt.hash(otp.toString(),10);
+   user.otpHash = await bcrypt.hash(otp.toString(),12);
    user.otpExpriy = Date.now() + 60000;
    user.attemptCount = 0;
    user.LockerStatus = "LOCKED";
 
    await user.save();
 
-   console.log("OTP created:", otp);
+   if(process.env.NODE_ENV === "development"){
+      console.log("OTP created:", otp);
+   }
 
    res.json({message:"OTP generated",success:true});
 }
@@ -90,8 +92,14 @@ export const verifyOTP = async (req,res)=>{
       return res.json({ errors: errors.array() });
    }
 
+   
+
+
    const user = await User.findById(req.user.id);
 
+if(user.otpExpriy && Date.now() < user.otpExpriy){
+   return res.status(429).json({message:"OTP already active"});
+}
    if(!user){
       return res.status(404).json({message:"User not found"});
    }

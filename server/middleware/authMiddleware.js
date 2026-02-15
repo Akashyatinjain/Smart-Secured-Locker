@@ -13,6 +13,7 @@ const protect=(req, res, next)  =>{
             req.user = decoded;
 
          next();
+         return;
         }
         catch(error){
             return res.status(401).json({
