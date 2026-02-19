@@ -5,7 +5,7 @@ const protect=(req, res, next)  =>{
     let token;
     if(
         req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith("Bearer") // check for the bearer token
     ){
         try{
             token = req.headers.authorization.split(" ")[1];

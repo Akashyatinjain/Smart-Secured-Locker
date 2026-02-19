@@ -18,13 +18,13 @@ const app = express();
 
 app.disable("x-powered-by");
 
-app.use(helmet());
+app.use(helmet()); // Helmet helps make your backend safer by preventing common web attacks like:
 
-app.use(morgan("dev"));
+app.use(morgan("dev")); // Morgan is a logging middleware used in Express.js to record HTTP requests coming to your server.
 
-app.use(limiter);
+app.use(limiter); // Limiter (usually called rate limiter) is middleware used to control how many requests a user can send to your server in a specific time period.
 
-app.use(express.json());
+app.use(express.json()); // json FORMAT DATE
 
 app.use("/api", router);
 app.use("/auth", authRoutes);

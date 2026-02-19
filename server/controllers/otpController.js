@@ -89,7 +89,7 @@ export const verifyOTP = async (req,res)=>{
 
    const errors = validationResult(req);
    if(!errors.isEmpty()){
-      return res.json({ errors: errors.array() });
+      return res.json({ errors: errors.array(),message:"Please insert vaild otp" });
    }
 
    
@@ -97,9 +97,9 @@ export const verifyOTP = async (req,res)=>{
 
    const user = await User.findById(req.user.id);
 
-if(user.otpExpriy && Date.now() < user.otpExpriy){
-   return res.status(429).json({message:"OTP already active"});
-}
+   if(user.otpExpriy && Date.now() < user.otpExpriy){
+      return res.status(429).json({message:"OTP already active"});
+   }
    if(!user){
       return res.status(404).json({message:"User not found"});
    }
