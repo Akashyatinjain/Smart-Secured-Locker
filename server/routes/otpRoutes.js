@@ -13,9 +13,16 @@ router.post(
    body("otp").isLength({max:6,min:6}),
    verifyOTP
 );
-router.get("/locker-status",async (req,res)=>{
-  const user = await User.findById(req.user.id);
+router.get("/locker-status", protect, async (req,res)=>{
 
-   res.json({status:user.LockerStatus});
+   const user = await User.findById(req.user.id);
+
+   if(!user){
+      return res.status(404).json({message:"User not found"});
+   }
+
+   res.json({
+      status:user.LockerStatus
+   });
 });
 export default router;

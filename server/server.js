@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import express from "express";
 import ConnectDB from "./config/db.js"
 import router from "./routes/otpRoutes.js";
@@ -6,14 +7,14 @@ import helmet from "helmet";
 import authRoutes from "./routes/authRoutes.js";
 import morgan from "morgan";
 import { errorHandler } from "./middleware/errorHandler.js";
+// ← Add this as the FIRST line
 
-
+dotenv.config();
 const port = process.env.DB_port || 3000;
 const limiter = rateLimit({
    windowMs:60*1000,
    max:10
 })
-
 const app = express();
 
 app.disable("x-powered-by");
