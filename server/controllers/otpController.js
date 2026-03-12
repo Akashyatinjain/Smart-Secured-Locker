@@ -24,6 +24,7 @@ export const getLockerStatus = async (req,res) => {
    });
 
 }
+
 export const createOTP = async (req,res)=>{
 
    const otp = GenerateOTP();
@@ -111,13 +112,13 @@ export const verifyOTP = async (req,res)=>{
    // if(user.otpExpriy && Date.now() < user.otpExpriy){
    //    return res.status(429).json({message:"OTP already active"});
    // }
-   if(!user.otpExpriy || Date.now() > user.otpExpriy){
-   return res.status(400).json({ message: "OTP Expired" });
-}
    if(!user){
       return res.status(404).json({message:"User not found"});
    }
 
+   if(!user.otpExpriy || Date.now() > user.otpExpriy){
+   return res.status(400).json({ message: "OTP Expired" });
+}
    if(!user.otpHash){
       return res.json({message:"No active OTP"});
    }
