@@ -15,7 +15,15 @@ import User from "../models/userModel.js";
 //     console.log("OTP created",otp)
 //     res.json({message:"OTP generated",success: true});
 // }
+export const getLockerStatus = async (req,res) => {
 
+   const user = await User.findById(req.user.id);
+
+   res.json({
+      lockerStatus: user.LockerStatus
+   });
+
+}
 export const createOTP = async (req,res)=>{
 
    const otp = GenerateOTP();
