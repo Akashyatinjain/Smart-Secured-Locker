@@ -1,51 +1,46 @@
 import dotenv from "dotenv";
 import express from "express";
-import ConnectDB from "./config/db.js"
-import router from "./routes/otpRoutes.js";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
-import authRoutes from "./routes/authRoutes.js";
-import morgan from "morgan";
-import { errorHandler } from "./middleware/errorHandler.js";
-// ← Add this as the FIRST line
 import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
+
+import ConnectDB from "./config/db.js";
+import router from "./routes/otpRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+
 dotenv.config();
 
-const port = process.env.DB_port || 3000;
-const limiter = rateLimit({
-   windowMs:60*1000,
-   max:10
-})
 const app = express();
+const port = process.env.DB_port || 3000;
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10
+});
 
 app.disable("x-powered-by");
+
 app.use(cors({
   origin: ["http://localhost:5173"],
-  methods: ["GET","POST","PUT","DELETE"],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
   credentials: true
 }));
 
-app.use(helmet()); // Helmet helps make your backend safer by preventing common web attacks like:
-
-app.use(morgan("dev")); // Morgan is a logging middleware used in Express.js to record HTTP requests coming to your server.
-
-app.use(limiter); // Limiter (usually called rate limiter) is middleware used to control how many requests a user can send to your server in a specific time period.
-
-app.use(express.json()); // json FORMAT DATE
+app.use(helmet());
+app.use(morgan("dev"));
+app.use(limiter);
+app.use(express.json());
 
 app.use("/api", router);
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req,res)=>{
    res.send("Server working OK");
 });
 
 app.use(errorHandler);
-
-// app.listen(port,(req,res)=>{
-//     ConnectDB();
-//     console.log(`Server is connect ${port}`);
-// })
 
 ConnectDB().then(()=>{
    app.listen(port, ()=>{
