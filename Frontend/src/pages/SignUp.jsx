@@ -84,7 +84,7 @@ function SignupPage() {
     setIsLoading(true);
 
     const response = await signupUser({
-      name: formData.fullName,
+      username: formData.fullName,
       email: formData.email,
       password: formData.password
     });
