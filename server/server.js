@@ -8,8 +8,9 @@ import authRoutes from "./routes/authRoutes.js";
 import morgan from "morgan";
 import { errorHandler } from "./middleware/errorHandler.js";
 // ← Add this as the FIRST line
-
+import cors from "cors";
 dotenv.config();
+
 const port = process.env.DB_port || 3000;
 const limiter = rateLimit({
    windowMs:60*1000,
@@ -18,6 +19,11 @@ const limiter = rateLimit({
 const app = express();
 
 app.disable("x-powered-by");
+app.use(cors({
+  origin: ["http://localhost:5173"],
+  methods: ["GET","POST","PUT","DELETE"],
+  credentials: true
+}));
 
 app.use(helmet()); // Helmet helps make your backend safer by preventing common web attacks like:
 
