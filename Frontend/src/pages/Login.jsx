@@ -278,7 +278,7 @@ function LoginPage() {
             <div className="text-center pt-4">
               <p className="text-sm text-slate-500">
                 Don't have an account?{' '}
-                <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                <Link to="/sign-up" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
                   Create account
                 </Link>
               </p>
