@@ -17,7 +17,7 @@ const port = process.env.DB_port || 3000;
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10
+  max: 100
 });
 
 app.disable("x-powered-by");
