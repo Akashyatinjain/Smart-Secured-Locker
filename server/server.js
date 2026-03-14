@@ -23,7 +23,7 @@ const limiter = rateLimit({
 app.disable("x-powered-by");
 
 app.use(cors({
-  origin: ["http://localhost:5173","https://smart-secured-locker-1fz5h74ni-akashyatinjains-projects.vercel.app"],
+  origin: ["http://localhost:5173","https://smart-secured-locker.vercel.app"],
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
   credentials: true
 }));
