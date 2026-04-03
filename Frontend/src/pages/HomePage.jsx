@@ -97,10 +97,10 @@ function App() {
 
             {/* Logo */}
             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => scrollToSection('home')}>
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-2 rounded-lg">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-600 p-2 rounded-lg">
                 <FiLock className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-600 bg-clip-text text-transparent">
                 SecureLocker
               </span>
             </div>
@@ -109,31 +109,31 @@ function App() {
             <div className="hidden md:flex items-center space-x-8">
               <button 
                 onClick={() => scrollToSection('home')}
-                className="text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-purple-600 font-medium transition-colors"
               >
                 Home
               </button>
               <button 
                 onClick={() => scrollToSection('features')}
-                className="text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-purple-600 font-medium transition-colors"
               >
                 Features
               </button>
               <button 
                 onClick={() => scrollToSection('how-it-works')}
-                className="text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-purple-600 font-medium transition-colors"
               >
                 How it Works
               </button>
               <button 
                 onClick={() => scrollToSection('demo')}
-                className="text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-purple-600 font-medium transition-colors"
               >
                 Live Demo
               </button>
               <button 
                 onClick={() => scrollToSection('contact')}
-                className="text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-purple-600 font-medium transition-colors"
               >
                 Contact
               </button>
@@ -143,13 +143,13 @@ function App() {
             <div className="flex items-center space-x-3">
               <button 
                 onClick={handleLogin}
-                className="px-5 py-2.5 text-slate-600 font-medium hover:text-indigo-600 transition-colors"
+                className="px-5 py-2.5 text-slate-600 font-medium hover:text-purple-600 transition-colors"
               >
                 Login
               </button>  
               <button 
                 onClick={handleSignup}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-indigo-200"
+                className="bg-gradient-to-r from-purple-600 to-purple-600 text-white px-5 py-2.5 rounded-lg hover:from-purple-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-purple-200"
               >
                 Sign Up Free
               </button>
@@ -159,15 +159,15 @@ function App() {
       </nav>
 
       {/* Hero Section */}
-      <section id="home" className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <section id="home" className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-50">
         {/* Background decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-200 rounded-full opacity-20"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full opacity-20"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200 rounded-full opacity-20"></div>
           {[...Array(10)].map((_, i) => (
             <div
               key={i}
-              className="absolute bg-indigo-300 rounded-full opacity-10 animate-float"
+              className="absolute bg-purple-300 rounded-full opacity-10 animate-float"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -183,13 +183,13 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
-              <div className="inline-flex items-center space-x-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full">
+              <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full">
                 <FiShield className="text-sm" />
                 <span className="text-sm font-medium">Enterprise-Grade Security</span>
               </div>
               <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
                 Smart Secure
-                <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-purple-600 to-purple-600 bg-clip-text text-transparent">
                   Locker System
                 </span>
               </h1>
@@ -199,14 +199,14 @@ function App() {
               <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={handleGetStarted}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-xl shadow-indigo-200 flex items-center group"
+                  className="bg-gradient-to-r from-purple-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-purple-700 hover:to-purple-700 transition-all duration-200 shadow-xl shadow-purple-200 flex items-center group"
                 >
                   Get Started Free
                   <FiArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button 
                   onClick={() => scrollToSection('demo')}
-                  className="border-2 border-indigo-600 text-indigo-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-50 transition-all duration-200 flex items-center"
+                  className="border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-purple-50 transition-all duration-200 flex items-center"
                 >
                   <FiSmartphone className="mr-2" />
                   Try Demo
@@ -233,7 +233,7 @@ function App() {
             <div className="relative">
               <div className="relative z-10">
                 <img 
-                  src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+               src="https://images.unsplash.com/photo-1633265486064-086b219458ec?auto=format&fit=crop&w=800&q=80"
                   alt="Smart Locker"
                   className="rounded-2xl shadow-2xl"
                 />
@@ -251,12 +251,8 @@ function App() {
                 </div>
                 <div className="absolute -top-6 -right-6 bg-white rounded-xl shadow-xl p-4 animate-float" style={{ animationDelay: '1s' }}>
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                      <FiActivity className="text-indigo-600 text-xl" />
-                    </div>
+                    
                     <div>
-                      <p className="text-sm text-slate-500">Active Users</p>
-                      <p className="font-semibold text-slate-900">2,847 Online</p>
                     </div>
                   </div>
                 </div>
@@ -286,7 +282,7 @@ function App() {
             {activeDemo && (
               <button
                 onClick={handleResetLocker}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
               >
                 Reset Demo
               </button>
@@ -297,7 +293,7 @@ function App() {
             <div className={`mb-6 p-4 rounded-xl text-center flex items-center justify-center ${
               message.includes('✓') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
               message.includes('✗') ? 'bg-red-50 text-red-700 border border-red-200' :
-              'bg-indigo-50 text-indigo-700 border border-indigo-200'
+              'bg-purple-50 text-purple-700 border border-purple-200'
             }`}>
               <span className="mr-2">{message}</span>
             </div>
@@ -327,7 +323,7 @@ function App() {
             {!showOtpInput && lockerStatus === 'locked' && (
               <button
                 onClick={handleSendOtp}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-xl shadow-indigo-200 flex items-center space-x-2 group"
+                className="bg-gradient-to-r from-purple-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-purple-700 hover:to-purple-700 transition-all duration-200 shadow-xl shadow-purple-200 flex items-center space-x-2 group"
               >
                 <FiSmartphone className="text-xl" />
                 <span>Open Locker with OTP</span>
@@ -351,7 +347,7 @@ function App() {
                         maxLength="1"
                         value={digit}
                         onChange={(e) => handleOtpChange(index, e.target.value)}
-                        className="w-14 h-14 text-center text-2xl font-semibold border-2 border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        className="w-14 h-14 text-center text-2xl font-semibold border-2 border-slate-200 rounded-xl focus:border-purple-600 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
                       />
                     ))}
                   </div>
@@ -375,8 +371,8 @@ function App() {
                 </div>
 
                 {/* Demo Hint */}
-                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-                  <p className="text-sm text-indigo-700 text-center">
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                  <p className="text-sm text-purple-700 text-center">
                     <span className="font-semibold">Demo Mode:</span> Use code "123456"
                   </p>
                 </div>
@@ -393,7 +389,7 @@ function App() {
                 </div>
                 <button
                   onClick={handleResetLocker}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-purple-600 hover:text-purple-700 font-medium"
                 >
                   ← Test Again
                 </button>
@@ -419,7 +415,7 @@ function App() {
                 icon: <FiShield className="text-3xl" />,
                 title: "Bank-Grade Security",
                 description: "Military-grade encryption ensures your belongings are always protected",
-                color: "from-indigo-600 to-purple-600",
+                color: "from-purple-600 to-purple-600",
                 stats: "256-bit AES"
               },
               {
@@ -443,7 +439,7 @@ function App() {
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-3">{feature.title}</h3>
                 <p className="text-slate-600 mb-4">{feature.description}</p>
-                <div className="flex items-center text-sm text-indigo-600 font-medium">
+                <div className="flex items-center text-sm text-purple-600 font-medium">
                   <span>{feature.stats}</span>
                   <FiChevronRight className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -454,11 +450,11 @@ function App() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="bg-gradient-to-br from-indigo-600 to-purple-600 py-24">
+      <section id="how-it-works" className="bg-gradient-to-br from-purple-600 to-purple-600 py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Simple 4-Step Process</h2>
-            <p className="text-xl text-indigo-100 max-w-2xl mx-auto">
+            <p className="text-xl text-purple-100 max-w-2xl mx-auto">
               Get started in minutes with our intuitive system
             </p>
           </div>
@@ -472,16 +468,16 @@ function App() {
             ].map((item, index) => (
               <div key={index} className="relative text-center group">
                 {index < 3 && (
-                  <div className="hidden md:block absolute top-12 left-[60%] w-full h-0.5 bg-indigo-300/50">
+                  <div className="hidden md:block absolute top-12 left-[60%] w-full h-0.5 bg-purple-300/50">
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 )}
                 <div className="relative z-10">
-                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center text-3xl font-bold text-indigo-600 mx-auto mb-6 group-hover:scale-110 transition-transform shadow-xl">
+                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center text-3xl font-bold text-purple-600 mx-auto mb-6 group-hover:scale-110 transition-transform shadow-xl">
                     {item.icon}
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-indigo-100">{item.desc}</p>
+                  <p className="text-purple-100">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -490,7 +486,7 @@ function App() {
           <div className="text-center mt-16">
             <button
               onClick={handleGetStarted}
-              className="bg-white text-indigo-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-50 transition-all duration-200 shadow-xl inline-flex items-center space-x-2 group"
+              className="bg-white text-purple-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-purple-50 transition-all duration-200 shadow-xl inline-flex items-center space-x-2 group"
             >
               <span>Get Started Now</span>
               <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
@@ -511,8 +507,8 @@ function App() {
               
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <FiMail className="text-xl text-indigo-600" />
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <FiMail className="text-xl text-purple-600" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Email</p>
@@ -521,8 +517,8 @@ function App() {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <FiPhone className="text-xl text-indigo-600" />
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <FiPhone className="text-xl text-purple-600" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Phone</p>
@@ -531,8 +527,8 @@ function App() {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <FiMapPin className="text-xl text-indigo-600" />
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <FiMapPin className="text-xl text-purple-600" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Address</p>
@@ -542,19 +538,19 @@ function App() {
               </div>
 
               <div className="mt-8 flex space-x-4">
-                <a href="#" className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-indigo-600 hover:text-white transition-colors">
+                <a href="#" className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white transition-colors">
                   <FiTwitter />
                 </a>
-                <a href="#" className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-indigo-600 hover:text-white transition-colors">
+                <a href="#" className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white transition-colors">
                   <FiLinkedin />
                 </a>
-                <a href="#" className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-indigo-600 hover:text-white transition-colors">
+                <a href="#" className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white transition-colors">
                   <FiFacebook />
                 </a>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8">
+           <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-8 hover:shadow-purple-200 transition-all duration-300">
               <h3 className="text-2xl font-semibold text-slate-900 mb-6">Send us a message</h3>
              <form
   onSubmit={(e) => {
@@ -601,7 +597,7 @@ function App() {
   className="w-full px-4 py-3 border rounded-xl"
 ></textarea>
                 </div>
-                <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-indigo-200">
+                <button className="w-full bg-gradient-to-r from-purple-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-purple-200">
                   Send Message
                 </button>
               </form>
@@ -616,10 +612,10 @@ function App() {
           <div className="grid md:grid-cols-4 gap-12">
             <div>
               <div className="flex items-center space-x-2 mb-6">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-2 rounded-lg">
+                <div className="bg-gradient-to-r from-purple-500 to-purple-500 p-2 rounded-lg">
                   <FiLock className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent">
+                <span className="text-xl font-bold bg-gradient-to-r from-purple-300 to-purple-300 bg-clip-text text-transparent">
                   SecureLocker
                 </span>
               </div>
