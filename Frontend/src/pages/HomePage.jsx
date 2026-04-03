@@ -19,7 +19,7 @@ import {
   FiArrowRight,
   FiChevronRight
 } from 'react-icons/fi';
-
+import emailjs from 'emailjs-com';
 function App() {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -556,27 +556,50 @@ function App() {
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8">
               <h3 className="text-2xl font-semibold text-slate-900 mb-6">Send us a message</h3>
-              <form className="space-y-4">
+             <form
+  onSubmit={(e) => {
+    e.preventDefault();
+
+    emailjs.sendForm(
+      'service_56es5kd',
+      'template_tczp81a',
+      e.target,
+      'OOlyyDJ99U5Lc3EEh'
+    ).then(
+      () => {
+        alert('Message sent successfully!');
+      },
+      (error) => {
+        alert('Failed to send message');
+        console.log(error);
+      }
+    );
+  }}
+  className="space-y-4"
+>
                 <div>
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
-                  />
+                 <input
+  type="text"
+  name="user_name"
+  placeholder="Your Name"
+  className="w-full px-4 py-3 border rounded-xl"
+/>
                 </div>
                 <div>
                   <input
-                    type="email"
-                    placeholder="Email Address"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
-                  />
+  type="email"
+  name="user_email"
+  placeholder="Email Address"
+  className="w-full px-4 py-3 border rounded-xl"
+/>
                 </div>
                 <div>
-                  <textarea
-                    rows="4"
-                    placeholder="Your Message"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
-                  ></textarea>
+                 <textarea
+  name="message"
+  rows="4"
+  placeholder="Your Message"
+  className="w-full px-4 py-3 border rounded-xl"
+></textarea>
                 </div>
                 <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-indigo-200">
                   Send Message
