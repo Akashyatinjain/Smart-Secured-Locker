@@ -72,6 +72,10 @@ export const userLogin = asyncHandler(async (req,res)=>{
 
    const token = generateToken(user._id);
 
+   // ✅🔥 SAVE TOKEN IN DB
+   user.token = token;
+   await user.save();
+
    res.status(200).json({
       message:"Login Successful",
       token

@@ -92,44 +92,133 @@ res.json({
 //    });
 // }
 // }
-export const verifyOTP = async (req,res)=>{
+// export const verifyOTP = async (req,res)=>{
 
-   const { otp } = req.body || {};
+//    const { otp } = req.body || {};
 
-   if(!otp){
-      return res.json({message:"OTP required"});
-   }
+//    if(!otp){
+//       return res.json({message:"OTP required"});
+//    }
 
-   const errors = validationResult(req);
-   if(!errors.isEmpty()){
-      return res.json({ errors: errors.array(),message:"Please insert vaild otp" });
-   }
+//    const errors = validationResult(req);
+//    if(!errors.isEmpty()){
+//       return res.json({ errors: errors.array(),message:"Please insert vaild otp" });
+//    }
 
    
 
 
-   const user = await User.findById(req.user.id);
+//    const user = await User.findById(req.user.id);
 
-   // if(user.otpExpriy && Date.now() < user.otpExpriy){
-   //    return res.status(429).json({message:"OTP already active"});
-   // }
+//    // if(user.otpExpriy && Date.now() < user.otpExpriy){
+//    //    return res.status(429).json({message:"OTP already active"});
+//    // }
+//    if(!user){
+//       return res.status(404).json({message:"User not found"});
+//    }
+
+//    if(!user.otpExpriy || Date.now() > user.otpExpriy){
+//    return res.status(400).json({ message: "OTP Expired" });
+// }
+//    if(!user.otpHash){
+//       return res.json({message:"No active OTP"});
+//    }
+
+//    if(Date.now() > user.otpExpriy){
+//       return res.json({message:"OTP Expired"});
+//    }
+
+//    if(user.attemptCount >= 3){
+//       return res.json({message:"Too many attempts"});
+//    }
+
+//    user.attemptCount++;
+
+//    const match = await bcrypt.compare(
+//       otp.toString(),
+//       user.otpHash
+//    );
+
+//    // if(match){
+
+//    //    user.LockerStatus = "UNLOCKED";
+
+//    //    // 🔥 one-time-use OTP
+//    //    user.otpHash = null;
+//    //    user.otpExpriy = null;
+//    //    user.attemptCount = 0;
+
+//    //    await user.save();
+
+//    //    return res.json({
+//    //       success:true,
+//    //       message:"Locker Unlocked"
+//    //    });
+
+//    // } 
+//   if(match){
+
+//    user.LockerStatus = "UNLOCKED";
+
+//    // reset OTP
+//    user.otpHash = null;
+//    user.otpExpriy = null;
+//    user.attemptCount = 0;
+
+//    await user.save();
+
+//    // 🔐 Auto lock after 10 seconds
+//    setTimeout(async () => {
+
+//       const updatedUser = await User.findById(user._id);
+
+//       if(updatedUser){
+//          updatedUser.LockerStatus = "LOCKED";
+//          await updatedUser.save();
+//       }
+
+//    },10000);
+
+//    return res.json({
+//       success:true,
+//       message:"Locker Unlocked for 10 seconds"
+//    });
+// }
+// else {
+
+//       await user.save();
+
+//       return res.json({
+//          success:false,
+//          message:"Wrong OTP"
+//       });
+//    }
+// }
+
+export const verifyOTP = async (req,res)=>{
+
+   const { otp, deviceId } = req.body || {};
+
+   if(!otp || !deviceId){
+      return res.status(400).json({ message:"OTP and deviceId required" });
+   }
+
+   const user = await User.findOne({ deviceId });
+
    if(!user){
-      return res.status(404).json({message:"User not found"});
+      return res.status(404).json({ message:"User not found" });
    }
 
    if(!user.otpExpriy || Date.now() > user.otpExpriy){
-   return res.status(400).json({ message: "OTP Expired" });
-}
-   if(!user.otpHash){
-      return res.json({message:"No active OTP"});
+      return res.status(400).json({ message: "OTP Expired" });
    }
 
-   if(Date.now() > user.otpExpriy){
-      return res.json({message:"OTP Expired"});
+   if(!user.otpHash){
+      return res.status(400).json({ message:"No active OTP" });
    }
 
    if(user.attemptCount >= 3){
-      return res.json({message:"Too many attempts"});
+      return res.status(400).json({ message:"Too many attempts" });
    }
 
    user.attemptCount++;
@@ -139,53 +228,32 @@ export const verifyOTP = async (req,res)=>{
       user.otpHash
    );
 
-   // if(match){
+   if(match){
 
-   //    user.LockerStatus = "UNLOCKED";
+      user.LockerStatus = "UNLOCKED";
 
-   //    // 🔥 one-time-use OTP
-   //    user.otpHash = null;
-   //    user.otpExpriy = null;
-   //    user.attemptCount = 0;
+      // reset OTP
+      user.otpHash = null;
+      user.otpExpriy = null;
+      user.attemptCount = 0;
 
-   //    await user.save();
+      await user.save();
 
-   //    return res.json({
-   //       success:true,
-   //       message:"Locker Unlocked"
-   //    });
+      // 🔐 Auto lock after 10 sec
+      setTimeout(async () => {
+         const updatedUser = await User.findById(user._id);
+         if(updatedUser){
+            updatedUser.LockerStatus = "LOCKED";
+            await updatedUser.save();
+         }
+      },10000);
 
-   // } 
-  if(match){
-
-   user.LockerStatus = "UNLOCKED";
-
-   // reset OTP
-   user.otpHash = null;
-   user.otpExpriy = null;
-   user.attemptCount = 0;
-
-   await user.save();
-
-   // 🔐 Auto lock after 10 seconds
-   setTimeout(async () => {
-
-      const updatedUser = await User.findById(user._id);
-
-      if(updatedUser){
-         updatedUser.LockerStatus = "LOCKED";
-         await updatedUser.save();
-      }
-
-   },10000);
-
-   return res.json({
-      success:true,
-      message:"Locker Unlocked for 10 seconds"
-   });
-}
-else {
-
+      return res.json({
+         success:true,
+         message:"Locker Unlocked for 10 seconds"
+      });
+   } 
+   else {
       await user.save();
 
       return res.json({

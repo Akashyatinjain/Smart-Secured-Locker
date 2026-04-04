@@ -25,9 +25,19 @@ const userSchema = new mongoose.Schema({
         default:0
     },
     LockerStatus:{
-   type:String,
-   default:"LOCKED"
-   }
+        type:String,
+        default:"LOCKED"
+    },
+
+    // ✅ ADD THESE TWO
+    token:{
+        type:String
+    },
+    deviceId:{
+        type:String,
+        default:"LOCKER_01" // you can customize later
+    }
+
 },{timestamps:true});
 
 const User = mongoose.model("user",userSchema);
