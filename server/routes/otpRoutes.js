@@ -3,7 +3,7 @@ import { createOTP, verifyOTP } from "../controllers/otpController.js";
 import { body } from "express-validator";
 import protect from "../middleware/authMiddleware.js";
 import User from "../models/userModel.js";
-
+import OtpHistory from "../models/otpHistoryModel.js";
 const router = express.Router();
 
 // router.post("/generate-otp",protect, createOTP);
@@ -15,8 +15,7 @@ const router = express.Router();
 
 router.post("/generate-otp", protect, createOTP); 
 
-router.post("/verify-otp", verifyOTP);
-// router.get("/locker-status", protect, async (req,res)=>{
+router.post("/verify-otp", protect, verifyOTP);// router.get("/locker-status", protect, async (req,res)=>{
 
 //    const user = await User.findById(req.user.id);
 
@@ -51,6 +50,22 @@ router.get("/locker-status", protect, async (req,res)=>{
       res.status(500).json({
          success:false,
          message:"Server error"
+      });
+   }
+});
+router.get("/otp-history", protect, async (req, res) => {
+   try {
+      const history = await OtpHistory.find({ user: req.user.id })
+         .sort({ createdAt: -1 });
+
+      res.json({
+         success: true,
+         history
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: "Error fetching history"
       });
    }
 });

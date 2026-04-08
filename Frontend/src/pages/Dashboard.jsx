@@ -14,8 +14,19 @@ const Dashboard = () => {
   const [showOTP, setShowOTP] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [copied, setCopied] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const token = localStorage.getItem("token");
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Axios interceptor to attach token
   API.interceptors.request.use((req) => {
@@ -121,66 +132,72 @@ const Dashboard = () => {
   const status = statusConfig[currentStatus];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 md:p-6">
       
       {/* Main Container */}
       <div className="max-w-7xl w-full">
         
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <div>
-              <h1 className="text-3xl font-light text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-light text-slate-900 tracking-tight">
                 Locker Management
-                <span className="block text-sm font-normal text-slate-500 mt-1">
+                <span className="block text-xs sm:text-sm font-normal text-slate-500 mt-0.5 sm:mt-1">
                   Enterprise Access Control System
                 </span>
               </h1>
             </div>
             
             {/* System Status Indicator */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="relative flex h-3 w-3">
+                <span className="relative flex h-2 w-2 sm:h-3 sm:w-3">
                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${status.dot} opacity-75`}></span>
-                  <span className={`relative inline-flex rounded-full h-3 w-3 ${status.dot}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 sm:h-3 sm:w-3 ${status.dot}`}></span>
                 </span>
-                <span className="text-sm text-slate-600">System Online</span>
+                <span className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">System Online</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="text-sm text-slate-600 hover:text-slate-900 transition-colors px-4 py-2 rounded-lg border border-slate-200 hover:border-slate-300 flex items-center space-x-2"
+                className="text-xs sm:text-sm text-slate-600 hover:text-slate-900 transition-colors px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-slate-200 hover:border-slate-300 flex items-center space-x-1.5 sm:space-x-2"
               >
-                <span>👤</span>
-                <span>Sign Out</span>
+                <span className="text-sm sm:text-base">👤</span>
+                <span>{isMobile ? 'Sign Out' : 'Sign Out'}</span>
               </button>
+              <button
+  onClick={() => navigate("/history")}
+  className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+>
+  View OTP History
+</button>
             </div>
           </div>
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
           
           {/* Left Column - Status Overview */}
-          <div className="col-span-12 lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-4 sm:space-y-5 md:space-y-6">
             
             {/* Status Card */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
+                <h2 className="text-xs sm:text-sm font-medium text-slate-600 uppercase tracking-wider">
                   Current Status
                 </h2>
               </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-4xl">{status.icon}</span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.badge}`}>
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <span className="text-3xl sm:text-4xl">{status.icon}</span>
+                  <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${status.badge}`}>
                     {lockerStatus}
                   </span>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>LOCKED</span>
                     <span>UNLOCKED</span>
@@ -194,7 +211,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Timestamp */}
-                <div className="mt-4 pt-4 border-t border-slate-100">
+                <div className="mt-4 pt-3 sm:pt-4 border-t border-slate-100">
                   <p className="text-xs text-slate-400">
                     Last updated: {new Date().toLocaleTimeString()}
                   </p>
@@ -204,20 +221,20 @@ const Dashboard = () => {
 
             {/* Quick Actions */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
+                <h2 className="text-xs sm:text-sm font-medium text-slate-600 uppercase tracking-wider">
                   Quick Actions
                 </h2>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <button
                   onClick={handleGenerateOTP}
                   disabled={loading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600 flex items-center justify-center space-x-2"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600 flex items-center justify-center space-x-2"
                 >
                   {loading ? (
                     <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -225,7 +242,7 @@ const Dashboard = () => {
                     </>
                   ) : (
                     <>
-                      <span>🔑</span>
+                      <span className="text-base sm:text-lg">🔑</span>
                       <span>Generate Access OTP</span>
                     </>
                   )}
@@ -235,13 +252,13 @@ const Dashboard = () => {
           </div>
 
           {/* Right Column - OTP Display & Activity */}
-          <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-5 md:space-y-6">
             
             {/* OTP Display Card */}
             {showOTP ? (
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                  <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                  <h2 className="text-xs sm:text-sm font-medium text-slate-600 uppercase tracking-wider">
                     Generated OTP
                   </h2>
                   <div className="flex items-center space-x-2">
@@ -250,13 +267,13 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <div className="p-8">
-                  <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
-                    <div className="flex items-center justify-between mb-4">
+                <div className="p-4 sm:p-6 md:p-8">
+                  <div className="bg-slate-50 rounded-lg p-4 sm:p-6 border border-slate-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
                       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                         One-Time Password
                       </span>
-                      <div className="h-1.5 w-24 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full sm:w-24 bg-slate-200 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-indigo-600 transition-all duration-1000"
                           style={{ width: `${(timeLeft / 60) * 100}%` }}
@@ -264,13 +281,13 @@ const Dashboard = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <span className="text-4xl font-mono font-bold tracking-[0.25em] text-slate-800">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                      <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold tracking-[0.15em] sm:tracking-[0.25em] text-slate-800 break-all">
                         {otp}
                       </span>
                       <button
                         onClick={copyToClipboard}
-                        className="relative p-3 hover:bg-slate-100 rounded-lg transition-colors group"
+                        className="relative p-3 hover:bg-slate-100 rounded-lg transition-colors group self-end sm:self-auto"
                       >
                         {copied ? (
                           <span className="text-emerald-600 text-sm font-medium">Copied!</span>
@@ -284,8 +301,8 @@ const Dashboard = () => {
                       </button>
                     </div>
 
-                    <div className="mt-4 flex items-center text-xs text-slate-400">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mt-3 sm:mt-4 flex items-center text-xs text-slate-400">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span>Valid for 60 seconds • Use once</span>
@@ -293,9 +310,9 @@ const Dashboard = () => {
                   </div>
 
                   {/* Security Notice */}
-                  <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="mt-3 sm:mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
                     <p className="text-xs text-amber-700 flex items-start">
-                      <span className="mr-2">⚠️</span>
+                      <span className="mr-1.5 sm:mr-2">⚠️</span>
                       <span>This OTP is sensitive. Don't share it with anyone. It will expire automatically.</span>
                     </p>
                   </div>
@@ -303,49 +320,49 @@ const Dashboard = () => {
               </div>
             ) : (
               // Placeholder when no OTP
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 md:p-12">
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
-                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-100 mb-3 sm:mb-4">
+                    <svg className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-700 mb-1">No Active OTP</h3>
-                  <p className="text-xs text-slate-500">Generate a new OTP to access the locker</p>
+                  <h3 className="text-sm sm:text-base font-medium text-slate-700 mb-1">No Active OTP</h3>
+                  <p className="text-xs sm:text-sm text-slate-500">Generate a new OTP to access the locker</p>
                 </div>
               </div>
             )}
 
             {/* System Info Card */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
                     </div>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500">Security Level</p>
-                    <p className="text-sm font-medium text-slate-700">AES-256 Encrypted</p>
+                    <p className="text-sm sm:text-base font-medium text-slate-700">AES-256 Encrypted</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500">Session</p>
-                    <p className="text-sm font-medium text-slate-700">Active • Real-time</p>
+                    <p className="text-sm sm:text-base font-medium text-slate-700">Active • Real-time</p>
                   </div>
                 </div>
               </div>

@@ -5,7 +5,7 @@ import SignupPage from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import './index.css';
-
+import HistoryPage from "./pages/HistoryPage";
 function App() {
   return (
     <BrowserRouter>
@@ -22,6 +22,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/history"
+  element={
+    <ProtectedRoute>
+      <HistoryPage />
+    </ProtectedRoute>
+  }
+/>
         
       </Routes>
     </BrowserRouter>
