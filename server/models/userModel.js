@@ -29,6 +29,8 @@ const userSchema = new mongoose.Schema({
         default:"LOCKED"
     },passkeyHash: {
    type: String
+},unlockUntil: {
+   type: Number
 },
 
     // ✅ ADD THESE TWO

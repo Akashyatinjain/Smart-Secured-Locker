@@ -7,142 +7,180 @@ import OtpHistory from "../models/otpHistoryModel.js";
    GET LOCKER STATUS
 ========================= */
 export const getLockerStatus = async (req, res) => {
-const user = await User.findById(req.user.id);
-   if (!user) {
-      return res.status(404).json({ message: "User not found" });
-   }
+   try {
+      const user = await User.findById(req.user.id);
 
-   res.json({
-      success: true,
-      lockerStatus: user.LockerStatus
-   });
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+
+      // 🔥 ADD THIS HERE (AUTO LOCK LOGIC)
+      if (user.unlockUntil && Date.now() > user.unlockUntil) {
+         user.LockerStatus = "LOCKED";
+         user.unlockUntil = null;
+         await user.save();
+      }
+
+      res.json({
+         success: true,
+         lockerStatus: user.LockerStatus
+      });
+
+   } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+   }
 };
+
 
 /* =========================
    GENERATE OTP
 ========================= */
 export const createOTP = async (req, res) => {
-const user = await User.findById(req.user.id);
-   if (!user) {
-      return res.status(404).json({ message: "User not found" });
+   try {
+      if (!req.user?.id) {
+         return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await User.findById(req.user.id);
+
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+
+      const otp = GenerateOTP();
+
+      user.otpHash = await bcrypt.hash(otp.toString(), 12);
+      user.otpExpriy = Date.now() + 60000;
+      user.attemptCount = 0;
+
+      // 🔐 ALWAYS LOCK ON OTP GENERATE
+      user.LockerStatus = "LOCKED";
+
+      await user.save();
+
+      await OtpHistory.create({
+         user: user._id,
+         status: "GENERATED",
+         deviceId: user.deviceId
+      });
+
+      res.json({
+         success: true,
+         message: "OTP generated",
+         otp // dev only
+      });
+
+   } catch (err) {
+      console.error("CREATE OTP ERROR:", err);
+      res.status(500).json({ message: "Server error" });
    }
-
-   const otp = GenerateOTP();
-
-   // 🔐 Save OTP hash
-   user.otpHash = await bcrypt.hash(otp.toString(), 12);
-   user.otpExpriy = Date.now() + 60000;
-   user.attemptCount = 0;
-   user.LockerStatus = "LOCKED";
-
-   await user.save();
-
-   // 📊 SAVE HISTORY (NO PLAIN OTP)
-   await OtpHistory.create({
-      user: user._id,
-      status: "GENERATED",
-      deviceId: user.deviceId
-   });
-
-   res.json({
-      success: true,
-      message: "OTP generated",
-      otp // ⚠️ only for dev/testing
-   });
 };
+
 
 /* =========================
    VERIFY OTP
 ========================= */
 export const verifyOTP = async (req, res) => {
-   const { otp, deviceId } = req.body || {};
+   try {
+      const { otp, deviceId } = req.body;
 
-   if (!otp || !deviceId) {
-      return res.status(400).json({
-         message: "OTP and deviceId required"
-      });
-   }
+      if (!otp || !deviceId) {
+         return res.status(400).json({
+            message: "OTP and deviceId required"
+         });
+      }
 
-const user = await User.findById(req.user.id);
-   if (!user) {
-      return res.status(404).json({ message: "User not found" });
-   }
+      if (!req.user?.id) {
+         return res.status(401).json({ message: "Unauthorized" });
+      }
 
-   // ⏰ EXPIRED
-   if (!user.otpExpriy || Date.now() > user.otpExpriy) {
-      await OtpHistory.create({
-         user: user._id,
-         status: "EXPIRED",
-         deviceId: user.deviceId
-      });
+      const user = await User.findById(req.user.id);
 
-      return res.status(400).json({ message: "OTP Expired" });
-   }
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
 
-   // ❌ NO OTP
-   if (!user.otpHash) {
-      return res.status(400).json({ message: "No active OTP" });
-   }
+      /* =========================
+         EXPIRED
+      ========================= */
+      if (!user.otpExpriy || Date.now() > user.otpExpriy) {
+         await OtpHistory.create({
+            user: user._id,
+            status: "EXPIRED",
+            deviceId: user.deviceId
+         });
 
-   // ❌ TOO MANY ATTEMPTS
-   if (user.attemptCount >= 3) {
-      return res.status(400).json({ message: "Too many attempts" });
-   }
+         return res.status(400).json({ message: "OTP Expired" });
+      }
 
-   user.attemptCount++;
+      /* =========================
+         NO OTP
+      ========================= */
+      if (!user.otpHash) {
+         return res.status(400).json({ message: "No active OTP" });
+      }
 
-   const match = await bcrypt.compare(
-      otp.toString(),
-      user.otpHash
-   );
+      /* =========================
+         ATTEMPT LIMIT
+      ========================= */
+      if (user.attemptCount >= 3) {
+         return res.status(400).json({ message: "Too many attempts" });
+      }
 
-   /* =========================
-      SUCCESS
-   ========================= */
-   if (match) {
-      user.LockerStatus = "UNLOCKED";
+      user.attemptCount++;
 
-      user.otpHash = null;
-      user.otpExpriy = null;
-      user.attemptCount = 0;
+      const match = await bcrypt.compare(
+         String(otp),
+         user.otpHash
+      );
 
+      /* =========================
+         SUCCESS
+      ========================= */
+      if (match) {
+         user.LockerStatus = "UNLOCKED";
+
+         // clear OTP
+         user.otpHash = null;
+         user.otpExpriy = null;
+         user.attemptCount = 0;
+
+         // 🔥 IMPORTANT: store unlock expiry (better than setTimeout)
+         user.unlockUntil = Date.now() + 10000;
+
+         await user.save();
+
+         await OtpHistory.create({
+            user: user._id,
+            status: "SUCCESS",
+            deviceId: user.deviceId
+         });
+
+         return res.json({
+            success: true,
+            message: "Locker Unlocked for 10 seconds"
+         });
+      }
+
+      /* =========================
+         FAILED
+      ========================= */
       await user.save();
 
-      // 📊 HISTORY
       await OtpHistory.create({
          user: user._id,
-         status: "SUCCESS",
+         status: "FAILED",
          deviceId: user.deviceId
       });
 
-      // 🔐 Auto lock after 10 sec
-      setTimeout(async () => {
-         const updatedUser = await User.findById(user._id);
-         if (updatedUser) {
-            updatedUser.LockerStatus = "LOCKED";
-            await updatedUser.save();
-         }
-      }, 10000);
-
       return res.json({
-         success: true,
-         message: "Locker Unlocked for 10 seconds"
+         success: false,
+         message: "Wrong OTP"
       });
+
+   } catch (err) {
+      console.error("VERIFY OTP ERROR:", err);
+      res.status(500).json({ message: "Server error" });
    }
-
-   /* =========================
-      FAILED
-   ========================= */
-   await user.save();
-
-   await OtpHistory.create({
-      user: user._id,
-      status: "FAILED",
-      deviceId: user.deviceId
-   });
-
-   return res.json({
-      success: false,
-      message: "Wrong OTP"
-   });
 };
