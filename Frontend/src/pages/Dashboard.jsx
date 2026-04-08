@@ -128,8 +128,12 @@ const Dashboard = () => {
     }
   };
 
-  const currentStatus = lockerStatus === "UNLOCKED" ? "UNLOCKED" : lockerStatus === "LOCKED" ? "LOCKED" : "Loading";
-  const status = statusConfig[currentStatus];
+const currentStatus =
+  lockerStatus === "UNLOCKED"
+    ? "UNLOCKED"
+    : lockerStatus === "LOCKED"
+    ? "LOCKED"
+    : "Loading";  const status = statusConfig[currentStatus];
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 md:p-6">
