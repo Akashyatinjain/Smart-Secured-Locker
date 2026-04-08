@@ -21,9 +21,18 @@ export const createPasskey = async (req, res) => {
 
 export const unlockWithPasskey = async (req, res) => {
    try {
+      console.log("BODY:", req.body); // 🔥 DEBUG
+      console.log("REQ USER:", req.user);
+
       const { passkey } = req.body;
 
-      // 🔥 ADD THIS
+      // ✅ SAFETY CHECK
+      if (!passkey) {
+         return res.status(400).json({
+            message: "Passkey is required"
+         });
+      }
+
       if (!req.user || !req.user.id) {
          return res.status(401).json({ message: "Unauthorized" });
       }
@@ -40,9 +49,10 @@ export const unlockWithPasskey = async (req, res) => {
          });
       }
 
+      // ✅ SAFE COMPARE
       const match = await bcrypt.compare(
-         passkey.toString(),
-         user.passkeyHash
+         String(passkey),
+         String(user.passkeyHash)
       );
 
       if (!match) {
