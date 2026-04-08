@@ -27,7 +27,9 @@ const userSchema = new mongoose.Schema({
     LockerStatus:{
         type:String,
         default:"LOCKED"
-    },
+    },passkeyHash: {
+   type: String
+},
 
     // ✅ ADD THESE TWO
     token:{

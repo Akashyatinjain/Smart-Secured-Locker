@@ -4,6 +4,7 @@ import { body } from "express-validator";
 import protect from "../middleware/authMiddleware.js";
 import User from "../models/userModel.js";
 import OtpHistory from "../models/otpHistoryModel.js";
+import { createPasskey, unlockWithPasskey } from "../controllers/passKeyController.js";
 const router = express.Router();
 
 // router.post("/generate-otp",protect, createOTP);
@@ -69,4 +70,7 @@ router.get("/otp-history", protect, async (req, res) => {
       });
    }
 });
+
+router.post("/create-passkey", protect, createPasskey);
+router.post("/unlock-passkey", protect, unlockWithPasskey);
 export default router;
