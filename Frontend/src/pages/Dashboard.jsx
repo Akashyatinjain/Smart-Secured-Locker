@@ -1,48 +1,167 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Shield,
+  Lock,
+  Unlock,
+  KeyRound,
+  RotateCcw,
+  Copy,
+  Check,
+  Clock,
+  History,
+  LogOut,
+  Radio,
+  Cpu,
+  AlertTriangle,
+  Zap,
+  Thermometer,
+  Activity,
+  Layers,
+  Sparkles,
+  RefreshCw,
+  Sliders,
+  Volume2,
+  VolumeX,
+  ExternalLink
+} from "lucide-react";
+import confetti from "canvas-confetti";
+import LockerVisualizer from "../components/LockerVisualizer";
+import HardwareSpecsModal from "../components/HardwareSpecsModal";
+import {
+  getLockerStatus,
+  generateOTP,
+  verifyOTP,
+  getOtpHistory,
+  createPasskey,
+  unlockWithPasskey,
+  relockLocker,
+  getCurrentUser,
+  logoutUser
+} from "../services/lockerAPI";
+import { playSound, toggleAudioMute, getAudioMuted } from "../utils/audio";
 
-const API = axios.create({
-  baseURL: "https://smart-secured-locker.onrender.com/api"
-});
-
-const Dashboard = () => {
+export default function Dashboard() {
   const navigate = useNavigate();
-  const [otp, setOtp] = useState("");
-  const [lockerStatus, setLockerStatus] = useState("Loading...");
+  const [user] = useState(() => getCurrentUser());
+  const [isMuted, setIsMuted] = useState(getAudioMuted());
+  const [hardwareModalOpen, setHardwareModalOpen] = useState(false);
+
+  // Locker Core State
+  const [lockerStatus, setLockerStatus] = useState("LOCKED");
   const [loading, setLoading] = useState(false);
-  const [showOTP, setShowOTP] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [copied, setCopied] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [unlockCountdown, setUnlockCountdown] = useState(0);
 
-  const token = localStorage.getItem("token");
+  // OTP State
+  const [activeOtp, setActiveOtp] = useState("");
+  const [otpTimeLeft, setOtpTimeLeft] = useState(0);
+  const [showOtpCard, setShowOtpCard] = useState(false);
+  const [copiedOtp, setCopiedOtp] = useState(false);
+  const [verifyOtpInput, setVerifyOtpInput] = useState(["", "", "", "", "", ""]);
 
-  // Check if mobile
+  // Passkey State
+  const [activePasskey, setActivePasskey] = useState("");
+  const [passkeyInput, setPasskeyInput] = useState("");
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+
+  // Active Tab: "otp" | "passkey" | "hardware"
+  const [activeTab, setActiveTab] = useState("otp");
+
+  // Notifications / Feedback Banner
+  const [notice, setNotice] = useState(null);
+
+  // Recent History
+  const [recentLogs, setRecentLogs] = useState([]);
+
+  // Load Initial Status and History
+  const fetchStatusAndLogs = async () => {
+    try {
+      const statusRes = await getLockerStatus();
+      if (statusRes.lockerStatus) {
+        setLockerStatus(statusRes.lockerStatus);
+      }
+
+      const histRes = await getOtpHistory();
+      if (histRes.history) {
+        setRecentLogs(histRes.history.slice(0, 4));
+      }
+    } catch (err) {
+      console.error("Status fetch error:", err);
+    }
+  };
+
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    fetchStatusAndLogs();
+
+    // Auto-poll locker status every 3.5 seconds
+    const interval = setInterval(fetchStatusAndLogs, 3500);
+    return () => clearInterval(interval);
   }, []);
 
-  // Axios interceptor to attach token
-  API.interceptors.request.use((req) => {
-    if (token) {
-      req.headers.Authorization = `Bearer ${token}`;
+  // OTP 60s expiration countdown timer
+  useEffect(() => {
+    let timer;
+    if (showOtpCard && otpTimeLeft > 0) {
+      timer = setInterval(() => {
+        setOtpTimeLeft((prev) => {
+          if (prev <= 1) {
+            setShowOtpCard(false);
+            setActiveOtp("");
+            setNotice({ type: "info", text: "Active OTP expired automatically." });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
-    return req;
-  });
+    return () => clearInterval(timer);
+  }, [showOtpCard, otpTimeLeft]);
 
-  // Fetch locker status
-  const fetchLockerStatus = async () => {
-    try {
-      const res = await API.get("/locker-status");
-      setLockerStatus(res.data.lockerStatus);
-    } catch (error) {
-      console.log(error);
+  // Unlock 10s countdown timer
+  useEffect(() => {
+    let timer;
+    if (lockerStatus === "UNLOCKED" && unlockCountdown > 0) {
+      timer = setInterval(() => {
+        setUnlockCountdown((prev) => {
+          if (prev <= 1) {
+            setLockerStatus("LOCKED");
+            playSound("lock");
+            setNotice({ type: "info", text: "Locker auto-relocked for security." });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [lockerStatus, unlockCountdown]);
+
+  // Handle OTP digit input
+  const handleOtpBoxChange = (idx, val) => {
+    if (!/^\d*$/.test(val)) return;
+    playSound("keypress");
+    const updated = [...verifyOtpInput];
+    updated[idx] = val.slice(-1);
+    setVerifyOtpInput(updated);
+
+    if (val && idx < 5) {
+      const nextEl = document.getElementById(`dash-otp-${idx + 1}`);
+      if (nextEl) nextEl.focus();
+    }
+  };
+
+  const handleOtpBoxKeyDown = (idx, e) => {
+    if (e.key === "Backspace" && !verifyOtpInput[idx] && idx > 0) {
+      const prevEl = document.getElementById(`dash-otp-${idx - 1}`);
+      if (prevEl) {
+        prevEl.focus();
+        const updated = [...verifyOtpInput];
+        updated[idx - 1] = "";
+        setVerifyOtpInput(updated);
+      }
+    } else if (e.key === "Enter") {
+      handleVerifyOTP();
     }
   };
 
@@ -50,345 +169,722 @@ const Dashboard = () => {
   const handleGenerateOTP = async () => {
     try {
       setLoading(true);
-      const res = await API.post("/generate-otp");
-      setOtp(res.data.otp || "Check backend console");
-      setShowOTP(true);
-      setTimeLeft(60);
+      playSound("keypress");
+      const res = await generateOTP();
       setLoading(false);
-    } catch (error) {
-      console.log(error);
+
+      if (res.otp) {
+        setActiveOtp(String(res.otp));
+        setShowOtpCard(true);
+        setOtpTimeLeft(60);
+        playSound("beep");
+        setNotice({ type: "success", text: "New 60-second OTP generated and active!" });
+        fetchStatusAndLogs();
+      }
+    } catch (_err) {
       setLoading(false);
+      playSound("error");
+      setNotice({ type: "error", text: "Failed to generate OTP. Check connection." });
     }
   };
 
-  // Copy OTP to clipboard
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(otp);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // Verify OTP
+  const handleVerifyOTP = async () => {
+    const code = verifyOtpInput.join("");
+    if (code.length < 6) {
+      playSound("error");
+      setNotice({ type: "error", text: "Please enter all 6 digits of the OTP." });
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      playSound("keypress");
+      const res = await verifyOTP({ otp: code, deviceId: "LOCKER_01" });
+      setVerifying(false);
+
+      if (res.success) {
+        playSound("unlock");
+        setLockerStatus("UNLOCKED");
+        setUnlockCountdown(10);
+        setNotice({ type: "success", text: "Locker Unlocked! Relocking in 10s." });
+        setVerifyOtpInput(["", "", "", "", "", ""]);
+        fetchStatusAndLogs();
+
+        try {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.6 }
+          });
+        } catch {
+          // ignore confetti if unsupported
+        }
+      } else {
+        playSound("error");
+        setNotice({ type: "error", text: res.message || "Invalid OTP code. Access Denied." });
+        fetchStatusAndLogs();
+      }
+    } catch (err) {
+      setVerifying(false);
+      playSound("error");
+      setNotice({ type: "error", text: err.response?.data?.message || "Verification failed." });
+    }
+  };
+
+  // Copy OTP
+  const handleCopyOtp = () => {
+    if (!activeOtp) return;
+    navigator.clipboard.writeText(activeOtp);
+    setCopiedOtp(true);
+    playSound("keypress");
+    setTimeout(() => setCopiedOtp(false), 2000);
+  };
+
+  // Autofill Active OTP into the verify box
+  const handleAutofillActiveOtp = () => {
+    if (!activeOtp) return;
+    playSound("keypress");
+    setVerifyOtpInput(activeOtp.split(""));
+  };
+
+  // Generate Passkey
+  const handleCreatePasskey = async () => {
+    try {
+      setPasskeyLoading(true);
+      playSound("keypress");
+      const res = await createPasskey();
+      setPasskeyLoading(false);
+      if (res.passkey) {
+        setActivePasskey(res.passkey);
+        playSound("beep");
+        setNotice({ type: "success", text: "Emergency Master Passkey created!" });
+      }
+    } catch (_err) {
+      setPasskeyLoading(false);
+      playSound("error");
+      setNotice({ type: "error", text: "Failed to generate passkey." });
+    }
+  };
+
+  // Unlock with Passkey
+  const handleUnlockPasskey = async () => {
+    if (!passkeyInput.trim()) {
+      playSound("error");
+      setNotice({ type: "error", text: "Please enter the master passkey." });
+      return;
+    }
+
+    try {
+      setPasskeyLoading(true);
+      playSound("keypress");
+      const res = await unlockWithPasskey({ passkey: passkeyInput.trim() });
+      setPasskeyLoading(false);
+
+      if (res.success) {
+        playSound("unlock");
+        setLockerStatus("UNLOCKED");
+        setUnlockCountdown(10);
+        setNotice({ type: "success", text: "Locker Unlocked via Master Passkey!" });
+        setPasskeyInput("");
+        fetchStatusAndLogs();
+      } else {
+        playSound("error");
+        setNotice({ type: "error", text: res.message || "Invalid passkey override." });
+      }
+    } catch (err) {
+      setPasskeyLoading(false);
+      playSound("error");
+      setNotice({ type: "error", text: err.response?.data?.message || "Passkey unlock failed." });
+    }
+  };
+
+  // Emergency Relock
+  const handleEmergencyRelock = async () => {
+    playSound("lock");
+    await relockLocker();
+    setLockerStatus("LOCKED");
+    setUnlockCountdown(0);
+    setNotice({ type: "info", text: "[MANUAL LOCKDOWN] Solenoid latched. Deadbolt pins engaged." });
+    fetchStatusAndLogs();
+  };
+
+  // Tamper Alert Simulation
+  const handleTriggerTamper = () => {
+    playSound("error");
+    setNotice({
+      type: "error",
+      text: "[TAMPER INTRUSION ALERT] Magnetic reed sensor tripped on LOCKER_01! Piezo 85dB sounding."
+    });
+  };
+
+  // Sound toggle
+  const handleSoundToggle = () => {
+    const muted = toggleAudioMute();
+    setIsMuted(muted);
+    if (!muted) playSound("beep");
   };
 
   // Logout
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    playSound("lock");
+    logoutUser();
     navigate("/login");
   };
 
-  // OTP countdown timer
-  useEffect(() => {
-    let timer;
-    if (showOTP && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setShowOTP(false);
-      setOtp("");
-    }
-    return () => clearInterval(timer);
-  }, [showOTP, timeLeft]);
-
-  useEffect(() => {
-    fetchLockerStatus();
-    // auto refresh locker status every 3 seconds
-    const interval = setInterval(() => {
-      fetchLockerStatus();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Professional color schemes based on status
-  const statusConfig = {
-    UNLOCKED: {
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
-      text: "text-emerald-700",
-      dot: "bg-emerald-500",
-      badge: "bg-emerald-100 text-emerald-700",
-      progress: "bg-emerald-500",
-      icon: "🔓"
-    },
-    LOCKED: {
-      bg: "bg-amber-50",
-      border: "border-amber-200",
-      text: "text-amber-700",
-      dot: "bg-amber-500",
-      badge: "bg-amber-100 text-amber-700",
-      progress: "bg-amber-500",
-      icon: "🔒"
-    },
-    Loading: {
-      bg: "bg-slate-50",
-      border: "border-slate-200",
-      text: "text-slate-700",
-      dot: "bg-slate-500",
-      badge: "bg-slate-100 text-slate-700",
-      progress: "bg-slate-500",
-      icon: "⏳"
-    }
-  };
-
-const currentStatus =
-  lockerStatus === "UNLOCKED"
-    ? "UNLOCKED"
-    : lockerStatus === "LOCKED"
-    ? "LOCKED"
-    : "Loading";  const status = statusConfig[currentStatus];
-
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-[#06080d] text-slate-100 p-4 sm:p-6 lg:p-8 relative overflow-x-hidden">
       
-      {/* Main Container */}
-      <div className="max-w-7xl w-full">
+      {/* Background ambient lighting */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute inset-0 cyber-grid opacity-25 pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 relative z-10">
         
-        {/* Header Section */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        {/* ========================================================
+            TOP BAR & SYSTEM METRICS
+        ======================================================== */}
+        <div className="p-4 sm:p-6 rounded-3xl bg-slate-900/70 border border-white/[0.08] backdrop-blur-xl shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          
+          {/* Left: Brand & Operator */}
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <Link
+              to="/"
+              onClick={() => playSound("keypress")}
+              className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/10 hover:scale-105 transition-all"
+            >
+              <Shield className="w-6 h-6" />
+            </Link>
             <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-light text-slate-900 tracking-tight">
-                Locker Management
-                <span className="block text-xs sm:text-sm font-normal text-slate-500 mt-0.5 sm:mt-1">
-                  Enterprise Access Control System
-                </span>
-              </h1>
-            </div>
-            
-            {/* System Status Indicator */}
-            <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="relative flex h-2 w-2 sm:h-3 sm:w-3">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${status.dot} opacity-75`}></span>
-                  <span className={`relative inline-flex rounded-full h-2 w-2 sm:h-3 sm:w-3 ${status.dot}`}></span>
+                <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                  Vault Control Console
+                </h1>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  LOCKER_01
                 </span>
-                <span className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">System Online</span>
               </div>
-              <button
-                onClick={handleLogout}
-                className="text-xs sm:text-sm text-slate-600 hover:text-slate-900 transition-colors px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-slate-200 hover:border-slate-300 flex items-center space-x-1.5 sm:space-x-2"
-              >
-                <span className="text-sm sm:text-base">👤</span>
-                <span>{isMobile ? 'Sign Out' : 'Sign Out'}</span>
-              </button>
-              <button
-  onClick={() => navigate("/history")}
-  className="bg-purple-600 text-white px-4 py-2 rounded-lg"
->
-  View OTP History
-</button>
+              <p className="text-xs text-slate-400 font-mono">
+                Operator: <span className="text-slate-200 font-medium">{user?.username || "Authorized User"}</span> ({user?.email || "user@example.com"})
+              </p>
             </div>
+          </div>
+
+          {/* Right: Quick Action Controls */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-end">
+            
+            {/* System Node Status Indicator */}
+            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-white/[0.08] text-xs font-mono text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>AES-256 ENCRYPTED</span>
+            </div>
+
+            {/* Refresh Button */}
+            <button
+              onClick={() => { playSound("keypress"); fetchStatusAndLogs(); }}
+              title="Refresh Live Status"
+              className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/[0.08] text-slate-300 hover:text-white transition-all"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+
+            {/* Sound Toggle */}
+            <button
+              onClick={handleSoundToggle}
+              title={isMuted ? "Unmute Sound" : "Mute Sound"}
+              className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/[0.08] text-slate-300 hover:text-emerald-400 transition-all"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+            </button>
+
+            {/* Hardware Specs */}
+            <button
+              onClick={() => { playSound("keypress"); setHardwareModalOpen(true); }}
+              className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/[0.08] text-xs font-mono text-cyan-300 flex items-center space-x-1.5 transition-all"
+            >
+              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">IoT Specs</span>
+            </button>
+
+            {/* History Link */}
+            <Link
+              to="/history"
+              onClick={() => playSound("keypress")}
+              className="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-mono text-emerald-300 flex items-center space-x-1.5 transition-all"
+            >
+              <History className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Audit Log</span>
+            </Link>
+
+            {/* Sign Out */}
+            <button
+              onClick={handleLogout}
+              className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 transition-all"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+
           </div>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
-          
-          {/* Left Column - Status Overview */}
-          <div className="lg:col-span-4 space-y-4 sm:space-y-5 md:space-y-6">
-            
-            {/* Status Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
-                <h2 className="text-xs sm:text-sm font-medium text-slate-600 uppercase tracking-wider">
-                  Current Status
-                </h2>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <span className="text-3xl sm:text-4xl">{status.icon}</span>
-                  <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${status.badge}`}>
-                    {lockerStatus}
-                  </span>
-                </div>
-                
-                {/* Progress Bar */}
-                <div className="space-y-1.5 sm:space-y-2">
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>LOCKED</span>
-                    <span>UNLOCKED</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${status.progress} transition-all duration-500 ease-in-out`}
-                      style={{ width: lockerStatus === "UNLOCKED" ? "100%" : "0%" }}
-                    />
-                  </div>
-                </div>
-
-                {/* Timestamp */}
-                <div className="mt-4 pt-3 sm:pt-4 border-t border-slate-100">
-                  <p className="text-xs text-slate-400">
-                    Last updated: {new Date().toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
+        {/* Global Alert Notification */}
+        {notice && (
+          <div
+            className={`p-4 rounded-2xl text-xs sm:text-sm font-mono flex items-center justify-between transition-all ${
+              notice.type === "success"
+                ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+                : notice.type === "error"
+                ? "bg-red-500/15 border border-red-500/30 text-red-300"
+                : "bg-cyan-500/15 border border-cyan-500/30 text-cyan-300"
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              {notice.type === "success" ? (
+                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              )}
+              <span>{notice.text}</span>
             </div>
+            <button onClick={() => setNotice(null)} className="text-xs opacity-70 hover:opacity-100">
+              ✕
+            </button>
+          </div>
+        )}
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
-                <h2 className="text-xs sm:text-sm font-medium text-slate-600 uppercase tracking-wider">
-                  Quick Actions
-                </h2>
+        {/* ========================================================
+            MAIN WORKSPACE GRID
+        ======================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+          
+          {/* Left Column (5 Cols): The Physical Locker Visualizer */}
+          <div className="lg:col-span-5 space-y-6">
+            <LockerVisualizer
+              status={lockerStatus}
+              countdown={unlockCountdown}
+              deviceId="LOCKER_01"
+              temperature="23.6°C"
+              voltage="12.1V"
+              onQuickRelock={handleEmergencyRelock}
+              onTriggerTamper={handleTriggerTamper}
+            />
+
+            {/* Quick Emergency Lockdown Button */}
+            <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/[0.08] flex items-center justify-between">
+              <div>
+                <p className="text-xs font-mono font-semibold text-white">EMERGENCY RELOCK</p>
+                <p className="text-[11px] text-slate-400">Instantly energizes latch & engages bolts</p>
               </div>
-              <div className="p-4 sm:p-6">
-                <button
-                  onClick={handleGenerateOTP}
-                  disabled={loading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600 flex items-center justify-center space-x-2"
-                >
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Generating OTP...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-base sm:text-lg">🔑</span>
-                      <span>Generate Access OTP</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={handleEmergencyRelock}
+                className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold transition-all"
+              >
+                Force Relock
+              </button>
             </div>
           </div>
 
-          {/* Right Column - OTP Display & Activity */}
-          <div className="lg:col-span-8 space-y-4 sm:space-y-5 md:space-y-6">
+          {/* Right Column (7 Cols): Multi-Tab Access Control Panel */}
+          <div className="lg:col-span-7 space-y-6">
             
-            {/* OTP Display Card */}
-            {showOTP ? (
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                  <h2 className="text-xs sm:text-sm font-medium text-slate-600 uppercase tracking-wider">
-                    Generated OTP
-                  </h2>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-slate-400">Expires in</span>
-                    <span className="text-sm font-mono font-medium text-slate-700">{timeLeft}s</span>
-                  </div>
-                </div>
+            {/* Tab Selection */}
+            <div className="flex space-x-2 p-1.5 rounded-2xl bg-slate-900/70 border border-white/[0.08]">
+              {[
+                { id: "otp", label: "OTP Access Control", icon: KeyRound },
+                { id: "passkey", label: "Master Passkey", icon: Shield },
+                { id: "hardware", label: "Hardware Telemetry", icon: Activity }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => { playSound("keypress"); setActiveTab(tab.id); }}
+                    className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center space-x-1.5 transition-all ${
+                      active
+                        ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab 1: OTP Access Control */}
+            {activeTab === "otp" && (
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/70 border border-white/[0.1] shadow-2xl backdrop-blur-xl space-y-6">
                 
-                <div className="p-4 sm:p-6 md:p-8">
-                  <div className="bg-slate-50 rounded-lg p-4 sm:p-6 border border-slate-200">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                        One-Time Password
-                      </span>
-                      <div className="h-1.5 w-full sm:w-24 bg-slate-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-indigo-600 transition-all duration-1000"
-                          style={{ width: `${(timeLeft / 60) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                      <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold tracking-[0.15em] sm:tracking-[0.25em] text-slate-800 break-all">
-                        {otp}
-                      </span>
-                      <button
-                        onClick={copyToClipboard}
-                        className="relative p-3 hover:bg-slate-100 rounded-lg transition-colors group self-end sm:self-auto"
-                      >
-                        {copied ? (
-                          <span className="text-emerald-600 text-sm font-medium">Copied!</span>
-                        ) : (
-                          <>
-                            <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="mt-3 sm:mt-4 flex items-center text-xs text-slate-400">
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Valid for 60 seconds • Use once</span>
-                    </div>
-                  </div>
-
-                  {/* Security Notice */}
-                  <div className="mt-3 sm:mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <p className="text-xs text-amber-700 flex items-start">
-                      <span className="mr-1.5 sm:mr-2">⚠️</span>
-                      <span>This OTP is sensitive. Don't share it with anyone. It will expire automatically.</span>
+                {/* Generation Card */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
+                  <div>
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                      <KeyRound className="w-5 h-5 text-emerald-400" />
+                      <span>One-Time Access Password</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Generate a cryptographic 6-digit TOTP code for single-entry unlock
                     </p>
                   </div>
+
+                  <button
+                    onClick={handleGenerateOTP}
+                    disabled={loading}
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                        <span>Generating...</span>
+                      </span>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        <span>Generate OTP</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-              </div>
-            ) : (
-              // Placeholder when no OTP
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 md:p-12">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-100 mb-3 sm:mb-4">
-                    <svg className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                    </svg>
+
+                {/* Display Generated OTP Card */}
+                {showOtpCard && activeOtp ? (
+                  <div className="p-5 rounded-2xl bg-[#080d1a] border border-emerald-500/30 shadow-inner">
+                    <div className="flex items-center justify-between pb-3 border-b border-emerald-500/20 text-xs font-mono text-emerald-400">
+                      <span>ACTIVE ACCESS OTP</span>
+                      <span className="bg-emerald-500/20 px-2 py-0.5 rounded font-bold text-emerald-300">
+                        EXPIRES IN: {otpTimeLeft}s
+                      </span>
+                    </div>
+
+                    <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] text-slate-400 uppercase font-mono">Dynamic Token Code:</p>
+                        <span className="text-3xl sm:text-4xl font-mono font-extrabold tracking-[0.25em] text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                          {activeOtp}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-2 w-full sm:w-auto">
+                        <button
+                          onClick={handleCopyOtp}
+                          className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono flex items-center justify-center space-x-1.5 transition-all"
+                        >
+                          {copiedOtp ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              <span className="text-emerald-400">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy Code</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={handleAutofillActiveOtp}
+                          className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-semibold transition-all"
+                        >
+                          Fill & Test
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expiration Progress Bar */}
+                    <div className="mt-4 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
+                        style={{ width: `${(otpTimeLeft / 60) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                  <h3 className="text-sm sm:text-base font-medium text-slate-700 mb-1">No Active OTP</h3>
-                  <p className="text-xs sm:text-sm text-slate-500">Generate a new OTP to access the locker</p>
+                ) : (
+                  <div className="p-6 rounded-2xl bg-[#080d1a]/50 border border-white/[0.06] text-center text-xs font-mono text-slate-400">
+                    <p>No active OTP generated. Click "Generate OTP" above to create a 60-second access code.</p>
+                  </div>
+                )}
+
+                {/* Direct Verification Input Box */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-mono text-slate-300 uppercase">
+                      Enter OTP Code to Unlock Locker
+                    </label>
+                    <span className="text-xs font-mono text-slate-500">MAX 3 ATTEMPTS</span>
+                  </div>
+
+                  <div className="flex justify-center gap-2 sm:gap-3">
+                    {verifyOtpInput.map((val, idx) => (
+                      <input
+                        key={idx}
+                        id={`dash-otp-${idx}`}
+                        type="text"
+                        maxLength={1}
+                        value={val}
+                        onChange={(e) => handleOtpBoxChange(idx, e.target.value)}
+                        onKeyDown={(e) => handleOtpBoxKeyDown(idx, e)}
+                        className="w-11 h-13 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold bg-[#080d1a] border-2 border-white/[0.12] rounded-xl text-emerald-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all shadow-inner"
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleVerifyOTP}
+                      disabled={verifying}
+                      className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+                    >
+                      {verifying ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                          <span>Verifying Token...</span>
+                        </span>
+                      ) : (
+                        <>
+                          <Unlock className="w-4 h-4" />
+                          <span>Verify & Unlock Solenoid</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        playSound("keypress");
+                        setVerifyOtpInput(["", "", "", "", "", ""]);
+                      }}
+                      className="px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-medium transition-all"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
+
               </div>
             )}
 
-            {/* System Info Card */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
+            {/* Tab 2: Master Passkey Emergency Override */}
+            {activeTab === "passkey" && (
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/70 border border-white/[0.1] shadow-2xl backdrop-blur-xl space-y-6">
+                
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
+                  <div>
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-cyan-400" />
+                      <span>Master Passkey Management</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Cryptographic fail-safe override for emergency physical vault release
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleCreatePasskey}
+                    disabled={passkeyLoading}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs font-mono shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50"
+                  >
+                    Generate Passkey
+                  </button>
+                </div>
+
+                {activePasskey && (
+                  <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 font-mono text-xs">
+                    <p className="text-cyan-400 font-semibold mb-1">Generated Master Passkey:</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-white">{activePasskey}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(activePasskey);
+                          setNotice({ type: "success", text: "Passkey copied to clipboard." });
+                        }}
+                        className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+                      >
+                        Copy
+                      </button>
                     </div>
                   </div>
+                )}
+
+                {/* Passkey Input */}
+                <div className="space-y-4">
                   <div>
-                    <p className="text-xs text-slate-500">Security Level</p>
-                    <p className="text-sm sm:text-base font-medium text-slate-700">AES-256 Encrypted</p>
+                    <label className="block text-xs font-mono text-slate-300 uppercase mb-1.5">
+                      Enter Emergency Passkey to Unlock
+                    </label>
+                    <input
+                      type="text"
+                      value={passkeyInput}
+                      onChange={(e) => setPasskeyInput(e.target.value)}
+                      placeholder="e.g. PASS-9482-SEC"
+                      className="w-full px-4 py-3 rounded-xl bg-[#080d1a] border border-white/[0.12] text-white text-sm font-mono focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleUnlockPasskey}
+                    disabled={passkeyLoading}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-cyan-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+                  >
+                    {passkeyLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                        <span>Verifying Passkey...</span>
+                      </span>
+                    ) : (
+                      <>
+                        <Unlock className="w-4 h-4" />
+                        <span>Unlock with Master Passkey</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs font-mono text-amber-300 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Master passkey unlock events are permanently recorded in the immutable audit log.</span>
+                </div>
+
+              </div>
+            )}
+
+            {/* Tab 3: Hardware Diagnostics & Sensor Telemetry */}
+            {activeTab === "hardware" && (
+              <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/70 border border-white/[0.1] shadow-2xl backdrop-blur-xl space-y-6">
+                
+                <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                  <div>
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-cyan-400" />
+                      <span>IoT Sensor & Relay Telemetry</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Live readings from ESP32 Microcontroller & Solenoid Circuit
+                    </p>
+                  </div>
+
+                  <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    GPIO SYNCED
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-[#080d1a] border border-white/[0.06]">
+                    <p className="text-xs font-mono text-slate-400">Solenoid Relay State</p>
+                    <p className="text-base font-mono font-bold text-emerald-400 mt-1">
+                      {lockerStatus === "UNLOCKED" ? "DE-ENERGIZED (OPEN)" : "ENERGIZED (LATCHED)"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Optocoupled 5V Relay Pin 26</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#080d1a] border border-white/[0.06]">
+                    <p className="text-xs font-mono text-slate-400">Door Reed Switch Sensor</p>
+                    <p className="text-base font-mono font-bold text-cyan-400 mt-1">
+                      {lockerStatus === "UNLOCKED" ? "DOOR OPEN / CONTACT BROKEN" : "DOOR CLOSED / MAGNETIC CONTACT"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Hardware Interrupt GPIO 34</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#080d1a] border border-white/[0.06]">
+                    <p className="text-xs font-mono text-slate-400">Relay Power Rail</p>
+                    <p className="text-base font-mono font-bold text-white mt-1">12.1V DC @ 1.1A</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Protected via 1N4007 Diode</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#080d1a] border border-white/[0.06]">
+                    <p className="text-xs font-mono text-slate-400">Coil Internal Temp</p>
+                    <p className="text-base font-mono font-bold text-emerald-400 mt-1">23.6°C (Normal Range)</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Threshold Alert at 45.0°C</p>
                   </div>
                 </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={() => { playSound("keypress"); setHardwareModalOpen(true); }}
+                    className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>View Complete Circuit Schematic & Firmware Code</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+            {/* Recent Audit Log Snapshot Card */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/70 border border-white/[0.1] shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                <div className="flex items-center space-x-2">
+                  <History className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-white font-mono uppercase">
+                    Recent Access Events
+                  </h3>
+                </div>
+
+                <Link
+                  to="/history"
+                  onClick={() => playSound("keypress")}
+                  className="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center space-x-1"
+                >
+                  <span>View All Records</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Session</p>
-                    <p className="text-sm sm:text-base font-medium text-slate-700">Active • Real-time</p>
-                  </div>
-                </div>
+              <div className="mt-4 space-y-3">
+                {recentLogs.length > 0 ? (
+                  recentLogs.map((log, idx) => {
+                    const isSuccess = log.status === "SUCCESS" || log.status === "UNLOCKED" || log.status === "PASSKEY_SUCCESS";
+                    const isFailed = log.status === "FAILED" || log.status === "PASSKEY_FAILED";
+
+                    return (
+                      <div
+                        key={log._id || idx}
+                        className="p-3.5 rounded-xl bg-[#080d1a] border border-white/[0.06] flex items-center justify-between text-xs font-mono"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full ${
+                              isSuccess ? "bg-emerald-400" : isFailed ? "bg-red-500" : "bg-cyan-400"
+                            }`}
+                          />
+                          <div>
+                            <span className="font-semibold text-white">{log.status}</span>
+                            <span className="text-slate-400 ml-2">Node: {log.deviceId || "LOCKER_01"}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-right text-slate-400">
+                          {log.otp && <span className="text-emerald-400 mr-2 font-bold">{log.otp}</span>}
+                          <span>{new Date(log.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs font-mono text-slate-500 text-center py-4">
+                    No access events logged yet. Generate an OTP to start logging.
+                  </p>
+                )}
               </div>
             </div>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* Add custom animations */}
-      <style jsx>{`
-        @keyframes ping {
-          75%, 100% {
-            transform: scale(2);
-            opacity: 0;
-          }
-        }
-        .animate-ping {
-          animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-      `}</style>
+      {/* Hardware Specs Modal */}
+      <HardwareSpecsModal
+        isOpen={hardwareModalOpen}
+        onClose={() => setHardwareModalOpen(false)}
+      />
+
     </div>
   );
-};
-
-export default Dashboard;
+}
