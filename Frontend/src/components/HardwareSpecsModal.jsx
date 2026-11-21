@@ -228,3 +228,4 @@ export default function HardwareSpecsModal({ isOpen, onClose }) {
     </div>
   );
 }
+
