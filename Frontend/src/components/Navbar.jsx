@@ -2,25 +2,19 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Shield,
-  Lock,
-  Unlock,
   Volume2,
   VolumeX,
   Menu,
   X,
-  Cpu,
   History,
   LayoutDashboard,
-  User,
   LogOut,
-  ChevronRight,
-  Activity,
-  Terminal
+  ChevronRight
 } from "lucide-react";
 import { getCurrentUser, logoutUser, checkBackendHealth } from "../services/lockerAPI";
 import { toggleAudioMute, getAudioMuted, playSound } from "../utils/audio";
 
-export default function Navbar({ onOpenHardwareSpecs }) {
+export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(() => getCurrentUser());
@@ -38,13 +32,12 @@ export default function Navbar({ onOpenHardwareSpecs }) {
   }, []);
 
   useEffect(() => {
-    // Check backend health periodically
     const checkHealth = async () => {
       const res = await checkBackendHealth();
       setBackendStatus(res);
     };
     checkHealth();
-    const interval = setInterval(checkHealth, 15000);
+    const interval = setInterval(checkHealth, 20000);
     return () => clearInterval(interval);
   }, []);
 
@@ -76,110 +69,88 @@ export default function Navbar({ onOpenHardwareSpecs }) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[#07090e]/85 backdrop-blur-xl border-b border-white/[0.07] transition-all">
+    <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
-          {/* Logo & Brand */}
+          {/* Logo */}
           <Link
             to="/"
             className="flex items-center space-x-3 group cursor-pointer select-none"
             onClick={() => playSound("keypress")}
           >
-            <div className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500/20 via-cyan-500/10 to-transparent border border-emerald-500/30 group-hover:border-emerald-400/60 shadow-lg shadow-emerald-500/10 transition-all duration-300">
-              <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 rounded-xl bg-emerald-400/10 blur-sm group-hover:blur-md transition-all"></div>
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 group-hover:bg-emerald-100 transition-all">
+              <Shield className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white group-hover:text-emerald-300 transition-colors">
-                  FORTIX<span className="text-emerald-400">.</span>
-                </span>
-                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono tracking-widest uppercase rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  v2.4
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 tracking-wider uppercase font-mono">
-                Smart Secured Locker
+              <span className="font-bold text-lg tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                SecureLocker
+              </span>
+              <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+                Smart Access System
               </p>
             </div>
           </Link>
 
-          {/* Center Navigation Links (Desktop) */}
-          <div className="hidden lg:flex items-center space-x-1 xl:space-x-2 bg-slate-900/40 p-1.5 rounded-full border border-white/[0.06]">
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
             <button
               onClick={() => { playSound("keypress"); scrollToSection("hero"); }}
-              className={`px-3 py-1.5 rounded-full text-xs xl:text-sm font-medium transition-all ${
-                location.pathname === "/" ? "text-white bg-white/[0.08]" : "text-slate-400 hover:text-white"
-              }`}
+              className="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
             >
-              Vault Core
+              Overview
             </button>
             <button
-              onClick={() => { playSound("keypress"); scrollToSection("simulator"); }}
-              className="px-3 py-1.5 rounded-full text-xs xl:text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all"
+              onClick={() => { playSound("keypress"); scrollToSection("demo"); }}
+              className="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
             >
-              Live Simulator
+              Live Demo
             </button>
             <button
-              onClick={() => { playSound("keypress"); scrollToSection("security"); }}
-              className="px-3 py-1.5 rounded-full text-xs xl:text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all"
+              onClick={() => { playSound("keypress"); scrollToSection("features"); }}
+              className="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
             >
-              Architecture
+              Features
             </button>
             <button
-              onClick={() => {
-                playSound("keypress");
-                if (onOpenHardwareSpecs) onOpenHardwareSpecs();
-                else scrollToSection("hardware");
-              }}
-              className="px-3 py-1.5 rounded-full text-xs xl:text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center space-x-1"
+              onClick={() => { playSound("keypress"); scrollToSection("how-it-works"); }}
+              className="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
             >
-              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span>IoT Specs</span>
+              How It Works
             </button>
             <button
               onClick={() => { playSound("keypress"); scrollToSection("contact"); }}
-              className="px-3 py-1.5 rounded-full text-xs xl:text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all"
+              className="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
             >
               Contact
             </button>
           </div>
 
-          {/* Right Action Bar */}
+          {/* Right Action Buttons */}
           <div className="hidden sm:flex items-center space-x-3">
-            {/* Live System Heartbeat Pill */}
-            <div className="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-slate-900/60 border border-white/[0.07] text-[11px] font-mono text-slate-300">
-              <span className="relative flex h-2 w-2">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${backendStatus.online ? "bg-emerald-400" : "bg-amber-400"} opacity-75`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${backendStatus.online ? "bg-emerald-500" : "bg-amber-500"}`}></span>
-              </span>
-              <span className="hidden md:inline">
-                {backendStatus.online ? `NODE-01 (${backendStatus.latency || 28}ms)` : "LOCAL DEMO"}
-              </span>
+            
+            {/* System Status Pill */}
+            <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-600 font-medium">
+              <span className={`w-2 h-2 rounded-full ${backendStatus.online ? "bg-emerald-500" : "bg-amber-500"}`} />
+              <span className="hidden lg:inline">{backendStatus.online ? "System Online" : "Local Mode"}</span>
             </div>
 
-            {/* Audio Toggle Button */}
+            {/* Audio Toggle */}
             <button
               onClick={handleMuteToggle}
-              title={isMuted ? "Unmute Sound Feedback" : "Mute Sound Feedback"}
-              className="p-2 rounded-xl bg-slate-900/60 border border-white/[0.07] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
+              title={isMuted ? "Unmute Sound" : "Mute Sound"}
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
             >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
             </button>
 
-            {/* Authenticated vs Guest View */}
             {user ? (
               <div className="flex items-center space-x-2">
                 <Link
                   to="/history"
                   onClick={() => playSound("keypress")}
-                  className={`p-2 rounded-xl border transition-all ${
-                    location.pathname === "/history"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                      : "bg-slate-900/60 text-slate-400 border-white/[0.07] hover:text-white"
-                  }`}
-                  title="Audit Log"
+                  className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-colors"
+                  title="View History"
                 >
                   <History className="w-4 h-4" />
                 </Link>
@@ -187,16 +158,16 @@ export default function Navbar({ onOpenHardwareSpecs }) {
                 <Link
                   to="/dashboard"
                   onClick={() => playSound("keypress")}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-400 hover:to-teal-500 transition-all"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm flex items-center space-x-1.5 transition-all"
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  <span>Vault Console</span>
+                  <span>Dashboard</span>
                 </Link>
 
                 <button
                   onClick={handleLogout}
                   title="Sign Out"
-                  className="p-2 rounded-xl bg-slate-900/60 border border-white/[0.07] text-slate-400 hover:text-red-400 hover:border-red-500/30 transition-all"
+                  className="p-2 rounded-lg bg-slate-100 hover:bg-red-50 border border-slate-200 text-slate-500 hover:text-red-600 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -206,33 +177,34 @@ export default function Navbar({ onOpenHardwareSpecs }) {
                 <Link
                   to="/login"
                   onClick={() => playSound("keypress")}
-                  className="px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                  className="px-3.5 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
                 >
-                  Sign In
+                  Log In
                 </Link>
                 <Link
                   to="/sign-up"
                   onClick={() => playSound("keypress")}
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-400 hover:to-cyan-400 transition-all"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm flex items-center space-x-1 transition-all"
                 >
-                  <span>Deploy Vault</span>
+                  <span>Sign Up</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             )}
+
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile menu button */}
           <div className="flex items-center space-x-2 sm:hidden">
             <button
               onClick={handleMuteToggle}
-              className="p-2 rounded-lg bg-slate-900/60 border border-white/[0.08] text-slate-400"
+              className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-600"
             >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-600" />}
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-slate-900/60 border border-white/[0.08] text-slate-300 hover:text-white"
+              className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -243,78 +215,62 @@ export default function Navbar({ onOpenHardwareSpecs }) {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="sm:hidden bg-[#0a0e17]/95 border-b border-white/[0.08] px-4 pt-3 pb-6 space-y-3 backdrop-blur-2xl">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] text-xs font-mono text-slate-400">
-            <span>SYSTEM STATUS</span>
-            <span className="text-emerald-400 flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {backendStatus.online ? "ONLINE" : "LOCAL DEMO"}
-            </span>
-          </div>
+        <div className="sm:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-6 space-y-3">
+          <button
+            onClick={() => scrollToSection("hero")}
+            className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg"
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => scrollToSection("demo")}
+            className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg"
+          >
+            Live Demo
+          </button>
+          <button
+            onClick={() => scrollToSection("features")}
+            className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg"
+          >
+            Features
+          </button>
+          <button
+            onClick={() => scrollToSection("how-it-works")}
+            className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg"
+          >
+            How It Works
+          </button>
+          <button
+            onClick={() => scrollToSection("contact")}
+            className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg"
+          >
+            Contact
+          </button>
 
-          <div className="space-y-1">
-            <button
-              onClick={() => scrollToSection("hero")}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/[0.04] text-sm font-medium"
-            >
-              Vault Core
-            </button>
-            <button
-              onClick={() => scrollToSection("simulator")}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/[0.04] text-sm font-medium"
-            >
-              Live Simulator
-            </button>
-            <button
-              onClick={() => scrollToSection("security")}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/[0.04] text-sm font-medium"
-            >
-              Security Architecture
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenHardwareSpecs) onOpenHardwareSpecs();
-                else scrollToSection("hardware");
-              }}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/[0.04] text-sm font-medium flex items-center justify-between"
-            >
-              <span>Hardware & Circuit Specs</span>
-              <Cpu className="w-4 h-4 text-cyan-400" />
-            </button>
-            <button
-              onClick={() => scrollToSection("contact")}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/[0.04] text-sm font-medium"
-            >
-              Contact Support
-            </button>
-          </div>
-
-          <div className="pt-3 border-t border-white/[0.06] space-y-2">
+          <div className="pt-3 border-t border-slate-200 space-y-2">
             {user ? (
               <>
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center space-x-2 w-full py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm"
+                  className="flex items-center justify-center space-x-2 w-full py-2.5 rounded-xl bg-emerald-600 text-white font-medium text-sm"
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  <span>Open Vault Dashboard</span>
+                  <span>Go to Dashboard</span>
                 </Link>
                 <Link
                   to="/history"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center space-x-2 w-full py-2.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-medium"
+                  className="flex items-center justify-center space-x-2 w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-medium"
                 >
                   <History className="w-4 h-4" />
-                  <span>Audit History</span>
+                  <span>View History</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center justify-center space-x-2 w-full py-2 rounded-xl text-red-400 hover:bg-red-500/10 text-sm font-medium"
+                  className="w-full py-2 rounded-xl text-red-600 text-sm font-medium hover:bg-red-50"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  Sign Out
                 </button>
               </>
             ) : (
@@ -322,14 +278,14 @@ export default function Navbar({ onOpenHardwareSpecs }) {
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center py-2.5 rounded-xl border border-white/[0.1] text-slate-200 text-sm font-medium hover:bg-white/[0.04]"
+                  className="text-center py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-medium"
                 >
-                  Sign In
+                  Log In
                 </Link>
                 <Link
                   to="/sign-up"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20"
+                  className="text-center py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium"
                 >
                   Sign Up Free
                 </Link>
